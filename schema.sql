@@ -1,0 +1,5 @@
+CREATE TABLE IF NOT EXISTS submissions (
+  id SERIAL PRIMARY KEY,
+  answers JSONB NOT NULL,
+  submitted_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
