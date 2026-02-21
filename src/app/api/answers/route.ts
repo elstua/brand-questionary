@@ -1,6 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { saveSubmission, getSubmissions } from "@/lib/db";
 
+export const dynamic = "force-dynamic";
+
+function getErrorMessage(error: unknown) {
+  if (error instanceof Error) return error.message;
+  if (typeof error === "string") return error;
+  return "Unknown error";
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -20,7 +28,7 @@ export async function POST(request: NextRequest) {
       message: "Answers saved",
     });
   } catch (error) {
-    console.error("Error saving answers:", error);
+    console.error("Error saving answers:", getErrorMessage(error), error);
     return NextResponse.json(
       { error: "Failed to process answers" },
       { status: 500 }
@@ -33,7 +41,7 @@ export async function GET() {
     const submissions = await getSubmissions();
     return NextResponse.json({ submissions });
   } catch (error) {
-    console.error("Error fetching submissions:", error);
+    console.error("Error fetching submissions:", getErrorMessage(error), error);
     return NextResponse.json(
       { error: "Failed to fetch submissions" },
       { status: 500 }
