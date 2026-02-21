@@ -18,6 +18,25 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
+## Database setup (Neon / Postgres)
+
+This app writes form submissions to Postgres via Neon.
+
+Set one of these environment variables:
+
+- `DATABASE_URL` (common local/dev name)
+- `POSTGRES_URL` (common Vercel/Neon integration name)
+
+For local development, create `.env.local`:
+
+```bash
+DATABASE_URL=postgresql://...
+```
+
+In production (for example Vercel), add `DATABASE_URL` or `POSTGRES_URL` in project environment settings.
+
+The app will create the `submissions` table automatically on first request if it does not exist.
+
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
 ## Learn More
