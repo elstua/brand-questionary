@@ -21,7 +21,7 @@ function getClient() {
   return neon(getDatabaseUrl());
 }
 
-async function ensureSchema(sql: ReturnType<typeof neon>) {
+async function ensureSchema(sql: ReturnType<typeof getClient>) {
   if (!ensureSchemaPromise) {
     ensureSchemaPromise = sql`
       CREATE TABLE IF NOT EXISTS submissions (
