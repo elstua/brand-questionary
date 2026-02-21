@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { QUESTIONS } from "@/data/questions";
 import type { Answer } from "@/types/questionnaire";
@@ -16,10 +16,14 @@ function defaultValue(type: string): string | string[] {
     case "multiple":
     case "multi_text":
       return [];
+    case "slider":
+      return "0";
     default:
       return "";
   }
 }
+
+const SLIDE_DISTANCE = 300;
 
 export default function Questionnaire() {
   const [currentStep, setCurrentStep] = useState(0);
@@ -29,6 +33,7 @@ export default function Questionnaire() {
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
+  const direction = useRef(1);
 
   const question = QUESTIONS[currentStep];
   const isLastQuestion = currentStep === QUESTIONS.length - 1;
@@ -42,6 +47,7 @@ export default function Questionnaire() {
 
   const handleNext = () => {
     saveCurrentAnswer();
+    direction.current = 1;
 
     if (isLastQuestion) {
       handleSubmit();
@@ -56,6 +62,7 @@ export default function Questionnaire() {
 
   const handleBack = () => {
     saveCurrentAnswer();
+    direction.current = -1;
     const prevStep = currentStep - 1;
     setCurrentStep(prevStep);
     const prevQ = QUESTIONS[prevStep];
@@ -116,14 +123,18 @@ export default function Questionnaire() {
       case "multi_text": {
         if (!Array.isArray(currentValue)) return false;
         const fields = question.multiTextFields ?? [];
-        return fields.every((_, i) => (currentValue[i] ?? "").trim().length > 0);
+        return fields.every(
+          (_, i) => (currentValue[i] ?? "").trim().length > 0
+        );
       }
       case "tone_cards":
         return typeof currentValue === "string" && currentValue.length > 0;
       case "icon_choice":
         return typeof currentValue === "string" && currentValue.length > 0;
       case "choice_or_custom":
-        return typeof currentValue === "string" && currentValue.trim().length > 0;
+        return (
+          typeof currentValue === "string" && currentValue.trim().length > 0
+        );
       default:
         return false;
     }
@@ -147,178 +158,196 @@ export default function Questionnaire() {
   }
 
   return (
-    <div className="w-full max-w-lg mx-auto">
-      {/* Progress bar */}
-      <div className="mb-8 h-1.5 w-full rounded-full bg-zinc-200 dark:bg-zinc-700 overflow-hidden">
-        <motion.div
-          className="h-full rounded-full bg-zinc-900 dark:bg-zinc-100"
-          initial={{ width: 0 }}
-          animate={{
-            width: `${((currentStep + 1) / QUESTIONS.length) * 100}%`,
-          }}
-          transition={{ type: "spring", stiffness: 300, damping: 30 }}
-        />
-      </div>
-
-      {/* Step counter */}
-      <div className="mb-2 text-xs text-zinc-400 dark:text-zinc-500">
-        {currentStep + 1} / {QUESTIONS.length}
-      </div>
-
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={currentStep}
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: -20 }}
-          transition={{ duration: 0.2 }}
-          className="space-y-6"
-        >
-          {/* Section header */}
-          {question.section && (
-            <div className="flex items-center gap-3 mb-2">
-              <span className="text-xs font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
-                {question.section}
-              </span>
-              <div className="flex-1 h-px bg-zinc-200 dark:bg-zinc-700" />
-            </div>
-          )}
-
-          {/* Question text */}
-          <h2 className="text-xl font-medium text-zinc-900 dark:text-zinc-100">
-            {question.text}
-          </h2>
-
-          {/* ── Text input ── */}
-          {question.type === "text" && (
-            <input
-              type="text"
-              value={typeof currentValue === "string" ? currentValue : ""}
-              onChange={(e) => setCurrentValue(e.target.value)}
-              placeholder={question.placeholder ?? "Type your answer..."}
-              className="w-full rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 px-4 py-3 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-500 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500"
-              autoFocus
+    <div className="w-full max-w-xl mx-auto">
+      {/* Step indicators */}
+      <div className="mb-6 flex items-center justify-center gap-1.5">
+        {QUESTIONS.map((_, i) => {
+          const isCompleted = i < currentStep;
+          const isCurrent = i === currentStep;
+          return (
+            <motion.div
+              key={i}
+              className={`rounded-full transition-colors ${
+                isCurrent
+                  ? "h-2.5 w-2.5 bg-zinc-900 dark:bg-zinc-100"
+                  : isCompleted
+                    ? "h-2 w-2 bg-zinc-400 dark:bg-zinc-500"
+                    : "h-2 w-2 bg-zinc-200 dark:bg-zinc-700"
+              }`}
+              layout
+              transition={{ type: "spring", stiffness: 500, damping: 30 }}
             />
-          )}
+          );
+        })}
+        <span className="ml-2 text-xs tabular-nums text-zinc-400 dark:text-zinc-500">
+          {currentStep + 1}/{QUESTIONS.length}
+        </span>
+      </div>
 
-          {/* ── Single choice ── */}
-          {question.type === "single" && question.options && (
-            <div className="space-y-2">
-              {question.options.map((opt) => (
-                <button
-                  key={opt}
-                  type="button"
-                  onClick={() => setCurrentValue(opt)}
-                  className={`block w-full rounded-lg border px-4 py-3 text-left transition-all ${
-                    currentValue === opt
-                      ? "border-zinc-900 dark:border-zinc-100 bg-zinc-100 dark:bg-zinc-800"
-                      : "border-zinc-200 dark:border-zinc-700 hover:border-zinc-400 dark:hover:border-zinc-500"
-                  }`}
-                >
-                  {opt}
-                </button>
-              ))}
-            </div>
-          )}
+      {/* Card with slide animation */}
+      <div className="relative">
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.div
+            key={currentStep}
+            initial={{ opacity: 0, x: direction.current * SLIDE_DISTANCE, filter: "blur(10px)", rotate: 4 }}
+            animate={{ opacity: 1, x: 0, filter: "blur(0px)", rotate: 0 }}
+            exit={{ opacity: 0, x: direction.current * -SLIDE_DISTANCE, filter: "blur(10px)", rotate: -4 }}
+            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+            className="rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm p-6 sm:p-8 space-y-6"
+          >
+            {/* Section header */}
+            {question.section && (
+              <div className="flex items-center gap-3">
+                <span className="text-xs font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
+                  {question.section}
+                </span>
+                <div className="flex-1 h-px bg-zinc-200 dark:bg-zinc-700" />
+              </div>
+            )}
 
-          {/* ── Multiple choice ── */}
-          {question.type === "multiple" && question.options && (
-            <div className="space-y-2">
-              {question.options.map((opt) => {
-                const arr = Array.isArray(currentValue) ? currentValue : [];
-                const selected = arr.includes(opt);
-                return (
+            {/* Question text */}
+            <h2 className="text-xl font-medium text-zinc-900 dark:text-zinc-100">
+              {question.text}
+            </h2>
+
+            {/* Description / hint */}
+            {question.description && (
+              <p className="text-sm text-zinc-500 dark:text-zinc-400 -mt-2">
+                {question.description}
+              </p>
+            )}
+
+            {/* ── Text input ── */}
+            {question.type === "text" && (
+              <input
+                type="text"
+                value={typeof currentValue === "string" ? currentValue : ""}
+                onChange={(e) => setCurrentValue(e.target.value)}
+                placeholder={question.placeholder ?? "Type your answer..."}
+                className="w-full rounded-lg border border-zinc-300 dark:border-zinc-600 bg-zinc-50 dark:bg-zinc-800 px-4 py-3 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500"
+                autoFocus
+              />
+            )}
+
+            {/* ── Single choice ── */}
+            {question.type === "single" && question.options && (
+              <div className="space-y-2">
+                {question.options.map((opt) => (
                   <button
                     key={opt}
                     type="button"
-                    onClick={() => toggleMultiple(opt)}
-                    className={`block w-full rounded-lg border px-4 py-3 text-left transition-all flex items-center gap-3 ${
-                      selected
+                    onClick={() => setCurrentValue(opt)}
+                    className={`block w-full rounded-lg border px-4 py-3 text-left transition-all ${
+                      currentValue === opt
                         ? "border-zinc-900 dark:border-zinc-100 bg-zinc-100 dark:bg-zinc-800"
                         : "border-zinc-200 dark:border-zinc-700 hover:border-zinc-400 dark:hover:border-zinc-500"
                     }`}
                   >
-                    <span
-                      className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border ${
-                        selected
-                          ? "border-zinc-900 dark:border-zinc-100"
-                          : "border-zinc-400"
-                      }`}
-                    >
-                      {selected && (
-                        <motion.span
-                          initial={{ scale: 0 }}
-                          animate={{ scale: 1 }}
-                          className="block h-2.5 w-2.5 rounded-full bg-zinc-900 dark:bg-zinc-100"
-                        />
-                      )}
-                    </span>
                     {opt}
                   </button>
-                );
-              })}
-            </div>
-          )}
+                ))}
+              </div>
+            )}
 
-          {/* ── Slider ── */}
-          {question.type === "slider" && question.sliderConfig && (
-            <SliderInput
-              config={question.sliderConfig}
-              value={typeof currentValue === "string" ? currentValue : ""}
-              onChange={(v) => setCurrentValue(v)}
-            />
-          )}
+            {/* ── Multiple choice ── */}
+            {question.type === "multiple" && question.options && (
+              <div className="space-y-2">
+                {question.options.map((opt) => {
+                  const arr = Array.isArray(currentValue) ? currentValue : [];
+                  const selected = arr.includes(opt);
+                  return (
+                    <button
+                      key={opt}
+                      type="button"
+                      onClick={() => toggleMultiple(opt)}
+                      className={`block w-full rounded-lg border px-4 py-3 text-left transition-all flex items-center gap-3 ${
+                        selected
+                          ? "border-zinc-900 dark:border-zinc-100 bg-zinc-100 dark:bg-zinc-800"
+                          : "border-zinc-200 dark:border-zinc-700 hover:border-zinc-400 dark:hover:border-zinc-500"
+                      }`}
+                    >
+                      <span
+                        className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border ${
+                          selected
+                            ? "border-zinc-900 dark:border-zinc-100"
+                            : "border-zinc-400"
+                        }`}
+                      >
+                        {selected && (
+                          <motion.span
+                            initial={{ scale: 0 }}
+                            animate={{ scale: 1 }}
+                            className="block h-2.5 w-2.5 rounded-full bg-zinc-900 dark:bg-zinc-100"
+                          />
+                        )}
+                      </span>
+                      {opt}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
 
-          {/* ── Quadrant map ── */}
-          {question.type === "quadrant" && question.quadrantConfig && (
-            <QuadrantMap
-              config={question.quadrantConfig}
-              value={typeof currentValue === "string" ? currentValue : ""}
-              onChange={(v) => setCurrentValue(v)}
-            />
-          )}
-
-          {/* ── Multi text ── */}
-          {question.type === "multi_text" && question.multiTextFields && (
-            <MultiTextInput
-              fields={question.multiTextFields}
-              value={Array.isArray(currentValue) ? currentValue : []}
-              onChange={(v) => setCurrentValue(v)}
-            />
-          )}
-
-          {/* ── Tone cards ── */}
-          {question.type === "tone_cards" && question.toneCardOptions && (
-            <ToneCards
-              options={question.toneCardOptions}
-              value={typeof currentValue === "string" ? currentValue : ""}
-              onChange={(v) => setCurrentValue(v)}
-            />
-          )}
-
-          {/* ── Icon choice ── */}
-          {question.type === "icon_choice" && question.iconOptions && (
-            <IconChoice
-              options={question.iconOptions}
-              value={typeof currentValue === "string" ? currentValue : ""}
-              onChange={(v) => setCurrentValue(v)}
-            />
-          )}
-
-          {/* ── Choice or custom ── */}
-          {question.type === "choice_or_custom" &&
-            question.choiceOrCustomOptions && (
-              <ChoiceOrCustom
-                options={question.choiceOrCustomOptions}
+            {/* ── Slider ── */}
+            {question.type === "slider" && question.sliderConfig && (
+              <SliderInput
+                config={question.sliderConfig}
                 value={typeof currentValue === "string" ? currentValue : ""}
                 onChange={(v) => setCurrentValue(v)}
               />
             )}
-        </motion.div>
-      </AnimatePresence>
+
+            {/* ── Quadrant map ── */}
+            {question.type === "quadrant" && question.quadrantConfig && (
+              <QuadrantMap
+                config={question.quadrantConfig}
+                value={typeof currentValue === "string" ? currentValue : ""}
+                onChange={(v) => setCurrentValue(v)}
+              />
+            )}
+
+            {/* ── Multi text ── */}
+            {question.type === "multi_text" && question.multiTextFields && (
+              <MultiTextInput
+                fields={question.multiTextFields}
+                value={Array.isArray(currentValue) ? currentValue : []}
+                onChange={(v) => setCurrentValue(v)}
+              />
+            )}
+
+            {/* ── Tone cards ── */}
+            {question.type === "tone_cards" && question.toneCardOptions && (
+              <ToneCards
+                options={question.toneCardOptions}
+                value={typeof currentValue === "string" ? currentValue : ""}
+                onChange={(v) => setCurrentValue(v)}
+              />
+            )}
+
+            {/* ── Icon choice ── */}
+            {question.type === "icon_choice" && question.iconOptions && (
+              <IconChoice
+                options={question.iconOptions}
+                value={typeof currentValue === "string" ? currentValue : ""}
+                onChange={(v) => setCurrentValue(v)}
+              />
+            )}
+
+            {/* ── Choice or custom ── */}
+            {question.type === "choice_or_custom" &&
+              question.choiceOrCustomOptions && (
+                <ChoiceOrCustom
+                  options={question.choiceOrCustomOptions}
+                  value={typeof currentValue === "string" ? currentValue : ""}
+                  onChange={(v) => setCurrentValue(v)}
+                />
+              )}
+          </motion.div>
+        </AnimatePresence>
+      </div>
 
       {/* Navigation */}
-      <div className="mt-8 flex gap-3">
+      <div className="mt-6 flex gap-3">
         {currentStep > 0 && (
           <button
             type="button"

@@ -34,6 +34,7 @@ export interface ToneCardOption {
   label: string;
   description: string;
   mockupText: string;
+  isCustom?: boolean;
 }
 
 export interface IconOption {
@@ -51,6 +52,7 @@ export interface Question {
   text: string;
   type: QuestionType;
   section?: string;
+  description?: string;
   placeholder?: string;
   options?: string[];
   sliderConfig?: SliderConfig;

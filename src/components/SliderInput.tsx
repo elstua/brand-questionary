@@ -10,24 +10,44 @@ interface SliderInputProps {
 }
 
 const POSITIONS = [
-  { value: "-1", pct: 0 },
-  { value: "0", pct: 50 },
-  { value: "1", pct: 100 },
+  { value: "-1", frac: 0 },
+  { value: "0", frac: 0.5 },
+  { value: "1", frac: 1 },
 ];
+
+function trackLeft(frac: number): string {
+  return `calc(12px + (100% - 24px) * ${frac})`;
+}
 
 export default function SliderInput({
   config,
   value,
   onChange,
 }: SliderInputProps) {
-  const activeIdx = POSITIONS.findIndex((p) => p.value === value);
-  const activePct = activeIdx >= 0 ? POSITIONS[activeIdx].pct : 50;
+  const activePos = POSITIONS.find((p) => p.value === value);
+  const activeFrac = activePos ? activePos.frac : 0.5;
+
+  const centerFrac = 0.5;
+  const progressLeft = Math.min(activeFrac, centerFrac);
+  const progressRight = Math.max(activeFrac, centerFrac);
 
   return (
     <div className="space-y-4">
       <div className="relative h-12 flex items-center px-3">
-        {/* Track */}
+        {/* Background track */}
         <div className="absolute left-3 right-3 h-1 rounded-full bg-zinc-200 dark:bg-zinc-700" />
+
+        {/* Progress line from center to current position */}
+        <motion.div
+          className="absolute h-1 rounded-full bg-zinc-900 dark:bg-zinc-100"
+          style={{ top: "50%", transform: "translateY(-50%)" }}
+          initial={false}
+          animate={{
+            left: trackLeft(progressLeft),
+            width: `calc((100% - 24px) * ${progressRight - progressLeft})`,
+          }}
+          transition={{ type: "spring", stiffness: 400, damping: 30 }}
+        />
 
         {/* Snap dots */}
         {POSITIONS.map((pos) => (
@@ -35,8 +55,8 @@ export default function SliderInput({
             key={pos.value}
             type="button"
             onClick={() => onChange(pos.value)}
-            className="absolute z-10 -translate-x-1/2"
-            style={{ left: `calc(12px + ${pos.pct}% * (100% - 24px) / 100)` }}
+            className="absolute z-10 -translate-x-1/2 p-2"
+            style={{ left: trackLeft(pos.frac) }}
           >
             <span
               className={`block h-3 w-3 rounded-full border-2 transition-colors ${
@@ -49,16 +69,12 @@ export default function SliderInput({
         ))}
 
         {/* Animated thumb */}
-        {value && (
-          <motion.div
-            className="absolute z-20 -translate-x-1/2 h-6 w-6 rounded-full bg-zinc-900 dark:bg-zinc-100 shadow-lg"
-            initial={false}
-            animate={{
-              left: `calc(12px + ${activePct}% * (100% - 24px) / 100)`,
-            }}
-            transition={{ type: "spring", stiffness: 400, damping: 30 }}
-          />
-        )}
+        <motion.div
+          className="absolute z-20 -translate-x-1/2 h-6 w-6 rounded-full bg-zinc-900 dark:bg-zinc-100 shadow-lg pointer-events-none"
+          initial={false}
+          animate={{ left: trackLeft(activeFrac) }}
+          transition={{ type: "spring", stiffness: 400, damping: 30 }}
+        />
       </div>
 
       {/* Labels */}

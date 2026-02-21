@@ -7,19 +7,21 @@ export const QUESTIONS: Question[] = [
     section: "About Character",
     text: "If Char were a person in a meeting, who are they?",
     type: "text",
-    placeholder:
+    description:
       "e.g., the one who sends the perfect summary after / the sharp friend who catches what everyone missed / the quiet one in the corner who somehow knows everything",
+    placeholder: "wdyt?",
   },
   {
     id: "elevator-pitch",
     section: undefined,
     text: "Someone at a party asks what Char does. You have 10 seconds. What do you say?",
     type: "text",
-    placeholder: "Type your 10-second pitch...",
+    description: "",
+    placeholder: "Shoot your shot",
   },
   {
     id: "adjectives",
-    text: "Pick three adjectives that Char should feel like. Now pick one that it should never feel like.",
+    text: "Pick three adjectives that Char should feel like. And pick one that it should never feel like.",
     type: "multi_text",
     multiTextFields: [
       {
@@ -84,9 +86,10 @@ export const QUESTIONS: Question[] = [
         mockupText: "Nothing here yet — start a meeting to see your notes.",
       },
       {
-        label: "Minimal & calm",
-        description: "Quiet, understated, zen-like",
-        mockupText: "No notes yet.",
+        label: "Something else",
+        description: "You have a different tone in mind",
+        mockupText: "",
+        isCustom: true,
       },
     ],
   },
@@ -117,9 +120,11 @@ export const QUESTIONS: Question[] = [
   },
   {
     id: "against-or-for",
-    text: "Do you see Char as against something (cloud platforms, surveillance, vendor lock-in), or for something (ownership, simplicity, control) — or both? Which leads?",
+    text: "Do you see Char as against something or for something — or both? Which leads?",
     type: "text",
-    placeholder: "Share your perspective...",
+    description:
+      "Against: cloud platforms, surveillance, vendor lock-in. For: ownership, simplicity, control.",
+    placeholder: "Type your answer...",
   },
 
   // ── About Preferences ────────────────────────────────────────────
@@ -128,8 +133,9 @@ export const QUESTIONS: Question[] = [
     section: "About Preferences",
     text: "You're designing a physical object that embodies Char. What is it?",
     type: "text",
-    placeholder:
+    description:
       "e.g., a Muji notebook, a Leica camera, a Dieter Rams radio, a Moleskine, a Field Notes pad",
+    placeholder: "Type your answer...",
   },
   {
     id: "dark-or-light",
@@ -173,12 +179,14 @@ export const QUESTIONS: Question[] = [
     section: "About Future",
     text: "It's 2028. Char is successful. What does the brand represent beyond meeting notes?",
     type: "text",
-    placeholder: "Describe your vision...",
+    description: "Describe your vision for the brand's future",
+    placeholder: "Type your answer...",
   },
   {
     id: "brand-energy",
     text: "Is there any brand — in any industry — where you think \"that's the energy we want\"?",
     type: "text",
-    placeholder: "Name a brand and what draws you to it...",
+    description: "Name a brand and what draws you to it",
+    placeholder: "Type your answer...",
   },
 ];
