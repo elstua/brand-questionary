@@ -5,7 +5,7 @@ import type { Answer } from "@/types/questionnaire";
 
 /* ── Raw response data ──────────────────────────────────────────────── */
 
-const USER_LABELS = ["User 1", "User 2", "User 3"] as const;
+const USER_LABELS = ["Yujong", "Harshika", "John"] as const;
 const USER_COLORS = [
   { dot: "bg-blue-500", ring: "ring-blue-300", text: "text-blue-600 dark:text-blue-400", bg: "bg-blue-50 dark:bg-blue-950/30", border: "border-blue-200 dark:border-blue-800" },
   { dot: "bg-amber-500", ring: "ring-amber-300", text: "text-amber-600 dark:text-amber-400", bg: "bg-amber-50 dark:bg-amber-950/30", border: "border-amber-200 dark:border-amber-800" },
